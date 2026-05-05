@@ -1,0 +1,331 @@
+import React, { useState, useMemo } from 'react';
+import { CheckCircle2, XCircle, ArrowRight, RotateCcw, BookOpen, Activity, Droplets, Thermometer } from 'lucide-react';
+
+const examData = [
+  {
+    id: 1,
+    paper: "June 2023",
+    topic: "Fluids",
+    type: "fluids",
+    question: "A technician measures the pressure of oil flowing through a pipe. Which one of these is a unit of pressure?",
+    options: ["kg m⁻³", "N m", "N m⁻²", "kg s⁻¹"],
+    correctAnswer: 2,
+    explanation: "Pressure is defined as force applied per unit area (P = F / A). The unit of force is the Newton (N) and area is in square meters (m²), resulting in N m⁻²."
+  },
+  {
+    id: 2,
+    paper: "January 2022",
+    topic: "Thermal Physics",
+    type: "thermal",
+    question: "When an energy transfer takes place in a system, what happens to the entropy of the system according to thermodynamic principles?",
+    options: [
+      "It decreases as the system becomes more organized.",
+      "It remains constant.",
+      "It increases, meaning more disorder.",
+      "It becomes exactly zero."
+    ],
+    correctAnswer: 2,
+    explanation: "According to the Second Law of Thermodynamics, during any real energy transfer, the entropy (disorder) of an isolated system always increases."
+  },
+  {
+    id: 3,
+    paper: "January 2022",
+    topic: "Fluids",
+    type: "fluids",
+    question: "A lorry and a car move fast next to each other. Air flows between them. What happens to the air pressure between the vehicles?",
+    options: [
+      "Pressure decreases due to Bernoulli's principle.",
+      "Pressure increases due to Archimedes' principle.",
+      "Pressure decreases due to Pascal's law.",
+      "Pressure remains the same but temperature drops."
+    ],
+    correctAnswer: 0,
+    explanation: "Bernoulli's principle states that an increase in fluid speed results in a decrease in pressure. Faster air between vehicles creates a low-pressure zone."
+  },
+  {
+    id: 4,
+    paper: "January 2022",
+    topic: "Thermal Physics",
+    type: "thermal",
+    question: "Sunlight heats a puddle of water, causing it to evaporate. What happens to the water molecules?",
+    options: [
+      "Molecules lose kinetic energy and bonds are formed.",
+      "Molecules gain kinetic energy, move faster, break bonds and escape.",
+      "Kinetic energy stays the same but potential energy drops.",
+      "The water molecules undergo nuclear fission."
+    ],
+    correctAnswer: 1,
+    explanation: "Molecules absorb thermal energy, increasing their kinetic energy until they can overcome intermolecular forces and escape as gas."
+  },
+  {
+    id: 5,
+    paper: "January 2022",
+    topic: "Thermal Physics",
+    type: "thermal",
+    question: "Calculate the mass of water evaporated if 2.00 × 10⁶ J of energy is supplied. (Latent heat of vaporization = 2.26 × 10⁶ J/kg)",
+    options: ["0.885 kg", "1.130 kg", "4.520 kg", "1.000 kg"],
+    correctAnswer: 0,
+    explanation: "Using m = E / L: (2.00 × 10⁶) / (2.26 × 10⁶) ≈ 0.885 kg."
+  },
+  {
+    id: 6,
+    paper: "January 2022",
+    topic: "Thermal Physics",
+    type: "thermal",
+    question: "If the volume of a cylinder containing air is increased at constant temperature, what happens to the pressure?",
+    options: [
+      "Increases; molecules move faster.",
+      "Decreases; molecules collide less frequently with walls.",
+      "Stays the same; kinetic energy is constant.",
+      "Increases; more frequent collisions."
+    ],
+    correctAnswer: 1,
+    explanation: "Boyle's Law: As volume increases, the frequency of collisions with the walls decreases, leading to lower pressure."
+  },
+  {
+    id: 7,
+    paper: "June 2023",
+    topic: "Fluids",
+    type: "fluids",
+    question: "Oil flows steadily through a pipe (laminar flow). Which describes the velocity across the pipe?",
+    options: [
+      "Velocity is highest at the walls.",
+      "Velocity is uniform across the pipe.",
+      "Velocity is highest in the center and zero at the walls.",
+      "Velocity fluctuates randomly."
+    ],
+    correctAnswer: 2,
+    explanation: "In laminar flow, friction at the walls creates a velocity gradient where the speed is zero at the boundary and maximum at the center."
+  },
+  {
+    id: 8,
+    paper: "January 2025 (Model)",
+    topic: "Materials",
+    type: "materials",
+    question: "What does the gradient of the initial straight-line portion of a stress-strain graph represent?",
+    options: ["Yield point", "Tensile strength", "Plastic deformation", "Young's modulus"],
+    correctAnswer: 3,
+    explanation: "The gradient of the elastic region is Stress/Strain, which is the definition of Young's Modulus (E)."
+  },
+  {
+    id: 9,
+    paper: "January 2025 (Model)",
+    topic: "Materials",
+    type: "materials",
+    question: "Which material exhibits 'hysteresis' during loading and unloading on a stress-strain graph?",
+    options: ["Polythene", "Copper wire", "Steel wire", "Glass"],
+    correctAnswer: 0,
+    explanation: "Polymers like polythene exhibit hysteresis, where energy is dissipated as heat during a deformation cycle."
+  },
+  {
+    id: 10,
+    paper: "January 2025 (Model)",
+    topic: "Thermal Physics",
+    type: "thermal",
+    question: "Why can a heat engine's efficiency never reach 100%?",
+    options: [
+      "Friction creates extra energy.",
+      "The specific heat capacity is too high.",
+      "Energy must always be expelled to a cold reservoir.",
+      "Energy is destroyed during work."
+    ],
+    correctAnswer: 2,
+    explanation: "The Second Law of Thermodynamics requires a temperature difference; some heat must be rejected to the sink."
+  },
+  {
+    id: 11,
+    paper: "Past Paper Mix",
+    topic: "Thermal Physics",
+    type: "thermal",
+    question: "A 2.0 kg copper block needs 7700 J to raise temp by 10 °C. What is the specific heat capacity?",
+    options: ["385 J/kg°C", "770 J/kg°C", "3850 J/kg°C", "15400 J/kg°C"],
+    correctAnswer: 0,
+    explanation: "c = Q / (mΔT) = 7700 / (2.0 * 10) = 385 J/kg°C."
+  },
+  {
+    id: 12,
+    paper: "Past Paper Mix",
+    topic: "Fluids",
+    type: "fluids",
+    question: "How does the dynamic viscosity of a liquid change as temperature increases?",
+    options: [
+      "It increases.",
+      "It decreases.",
+      "It remains constant.",
+      "It drops to zero."
+    ],
+    correctAnswer: 1,
+    explanation: "Increased kinetic energy allows molecules to overcome cohesive forces, reducing internal friction (viscosity)."
+  },
+  {
+    id: 13,
+    paper: "Past Paper Mix",
+    topic: "Materials",
+    type: "materials",
+    question: "A 2.0 m wire extends by 4.0 mm under force. What is the strain?",
+    options: ["0.002", "0.008", "2.0", "8.0"],
+    correctAnswer: 0,
+    explanation: "Strain = extension / length = 0.004m / 2.0m = 0.002."
+  },
+  {
+    id: 14,
+    paper: "Past Paper Mix",
+    topic: "Fluids",
+    type: "fluids",
+    question: "According to Archimedes' principle, upthrust is equal to...",
+    options: [
+      "Object volume.",
+      "Object mass.",
+      "Weight of fluid displaced.",
+      "Fluid density."
+    ],
+    correctAnswer: 2,
+    explanation: "Upthrust equals the weight of the fluid displaced by the submerged part of the object."
+  },
+  {
+    id: 15,
+    paper: "Past Paper Mix",
+    topic: "Thermal Physics",
+    type: "thermal",
+    question: "What is an advantage of a thermocouple over a liquid-in-glass thermometer?",
+    options: [
+      "It is fragile.",
+      "Slow response.",
+      "Measures rapidly changing temperatures.",
+      "No calibration needed."
+    ],
+    correctAnswer: 2,
+    explanation: "Small thermal mass allows thermocouples to track rapid changes and reach thermal equilibrium quickly."
+  }
+];
+
+export default function App() {
+  const [index, setIndex] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [score, setScore] = useState(0);
+  const [finished, setFinished] = useState(false);
+
+  const current = examData[index];
+  const progress = (index / examData.length) * 100;
+
+  const TopicIcon = ({ type }) => {
+    switch (type) {
+      case 'fluids': return <Droplets size={18} className="text-blue-500" />;
+      case 'thermal': return <Thermometer size={18} className="text-red-500" />;
+      case 'materials': return <Activity size={18} className="text-green-500" />;
+      default: return <BookOpen size={18} />;
+    }
+  };
+
+  const handleChoice = (idx) => {
+    if (isAnswered) return;
+    setSelected(idx);
+    setIsAnswered(true);
+    if (idx === current.correctAnswer) setScore(prev => prev + 1);
+  };
+
+  const next = () => {
+    if (index + 1 < examData.length) {
+      setIndex(index + 1);
+      setSelected(null);
+      setIsAnswered(false);
+    } else {
+      setFinished(true);
+    }
+  };
+
+  if (finished) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center">
+          <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 size={40} />
+          </div>
+          <h2 className="text-2xl font-bold mb-2 text-slate-800">Practice Complete</h2>
+          <div className="bg-slate-50 py-6 rounded-2xl my-6">
+            <p className="text-4xl font-black text-blue-600">{score} / {examData.length}</p>
+            <p className="text-slate-500 mt-2 font-medium">Final Score</p>
+          </div>
+          <button onClick={() => window.location.reload()} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2">
+            <RotateCcw size={20} /> Restart Session
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-4">
+      <div className="max-w-2xl w-full">
+        <header className="mb-8 flex justify-between items-end">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">BTEC Unit 5 Physics</h1>
+            <p className="text-slate-500 text-sm font-medium">31627H/1P Exam Prep</p>
+          </div>
+          <div className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold">
+            Score: {score}
+          </div>
+        </header>
+
+        <div className="w-full bg-slate-200 h-2 rounded-full mb-8 overflow-hidden">
+          <div className="bg-blue-600 h-full transition-all duration-300" style={{ width: `${progress}%` }} />
+        </div>
+
+        <main className="bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden">
+          <div className="p-6 md:p-8">
+            <div className="flex gap-2 mb-4">
+              <span className="flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-lg text-xs font-bold text-slate-600 uppercase">
+                <TopicIcon type={current.type} /> {current.topic}
+              </span>
+              <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-lg text-xs font-bold">
+                {current.paper}
+              </span>
+            </div>
+            <h2 className="text-xl font-semibold text-slate-800 leading-snug">
+              {current.question}
+            </h2>
+          </div>
+
+          <div className="px-6 md:px-8 pb-8 space-y-3">
+            {current.options.map((opt, i) => (
+              <button
+                key={i}
+                disabled={isAnswered}
+                onClick={() => handleChoice(i)}
+                className={`w-full text-left p-4 rounded-xl border-2 transition-all flex justify-between items-center ${
+                  isAnswered 
+                    ? i === current.correctAnswer 
+                      ? "bg-green-50 border-green-500 text-green-800" 
+                      : i === selected 
+                        ? "bg-red-50 border-red-500 text-red-800"
+                        : "bg-white border-slate-100 opacity-50"
+                    : "bg-white border-slate-200 hover:border-blue-400"
+                }`}
+              >
+                <span className="font-medium">{opt}</span>
+                {isAnswered && i === current.correctAnswer && <CheckCircle2 size={18} />}
+                {isAnswered && i === selected && i !== current.correctAnswer && <XCircle size={18} />}
+              </button>
+            ))}
+
+            {isAnswered && (
+              <div className="mt-6 p-5 bg-blue-50 rounded-2xl border border-blue-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <p className="text-sm text-blue-900 leading-relaxed italic">
+                  <strong>Explanation:</strong> {current.explanation}
+                </p>
+                <button 
+                  onClick={next}
+                  className="mt-4 w-full bg-slate-900 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors"
+                >
+                  {index + 1 === examData.length ? "Finish Quiz" : "Next Question"}
+                  <ArrowRight size={18} />
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
