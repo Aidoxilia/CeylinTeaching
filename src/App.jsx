@@ -1,623 +1,736 @@
 import { useMemo, useState } from "react";
 import {
-  Activity,
-  ArrowRight,
-  BookOpen,
-  CheckCircle2,
-  Droplets,
-  RotateCcw,
-  Thermometer,
-  Trophy,
-  XCircle,
-} from "lucide-react";
+  allTopicsLabel,
+  modeMeta,
+  paperLibrary,
+  questionBank,
+  sourceTypeMeta,
+} from "./data/trainerData";
+import { gradeResponse } from "./lib/grading";
 
-const examData = [
-  {
-    id: 1,
-    paper: "June 2023",
-    topic: "Fluids",
-    type: "fluids",
-    question:
-      "A technician measures the pressure of oil flowing through a pipe. Which one of these is a unit of pressure?",
-    options: ["kg m⁻³", "N m", "N m⁻²", "kg s⁻¹"],
-    correctAnswer: 2,
-    explanation:
-      "Pressure is defined as force applied per unit area (P = F / A). The unit of force is the Newton (N) and area is in square meters (m²), resulting in N m⁻².",
-  },
-  {
-    id: 2,
-    paper: "January 2022",
-    topic: "Thermal Physics",
-    type: "thermal",
-    question:
-      "When an energy transfer takes place in a system, what happens to the entropy of the system according to thermodynamic principles?",
-    options: [
-      "It decreases as the system becomes more organized.",
-      "It remains constant.",
-      "It increases, meaning more disorder.",
-      "It becomes exactly zero.",
-    ],
-    correctAnswer: 2,
-    explanation:
-      "According to the Second Law of Thermodynamics, during any real energy transfer, the entropy (disorder) of an isolated system always increases.",
-  },
-  {
-    id: 3,
-    paper: "January 2022",
-    topic: "Fluids",
-    type: "fluids",
-    question:
-      "A lorry and a car move fast next to each other. Air flows between them. What happens to the air pressure between the vehicles?",
-    options: [
-      "Pressure decreases due to Bernoulli's principle.",
-      "Pressure increases due to Archimedes' principle.",
-      "Pressure decreases due to Pascal's law.",
-      "Pressure remains the same but temperature drops.",
-    ],
-    correctAnswer: 0,
-    explanation:
-      "Bernoulli's principle states that an increase in fluid speed results in a decrease in pressure. Faster air between vehicles creates a low-pressure zone.",
-  },
-  {
-    id: 4,
-    paper: "January 2022",
-    topic: "Thermal Physics",
-    type: "thermal",
-    question:
-      "Sunlight heats a puddle of water, causing it to evaporate. What happens to the water molecules?",
-    options: [
-      "Molecules lose kinetic energy and bonds are formed.",
-      "Molecules gain kinetic energy, move faster, break bonds and escape.",
-      "Kinetic energy stays the same but potential energy drops.",
-      "The water molecules undergo nuclear fission.",
-    ],
-    correctAnswer: 1,
-    explanation:
-      "Molecules absorb thermal energy, increasing their kinetic energy until they can overcome intermolecular forces and escape as gas.",
-  },
-  {
-    id: 5,
-    paper: "January 2022",
-    topic: "Thermal Physics",
-    type: "thermal",
-    question:
-      "Calculate the mass of water evaporated if 2.00 × 10⁶ J of energy is supplied. (Latent heat of vaporization = 2.26 × 10⁶ J/kg)",
-    options: ["0.885 kg", "1.130 kg", "4.520 kg", "1.000 kg"],
-    correctAnswer: 0,
-    explanation: "Using m = E / L: (2.00 × 10⁶) / (2.26 × 10⁶) ≈ 0.885 kg.",
-  },
-  {
-    id: 6,
-    paper: "January 2022",
-    topic: "Thermal Physics",
-    type: "thermal",
-    question:
-      "If the volume of a cylinder containing air is increased at constant temperature, what happens to the pressure?",
-    options: [
-      "Increases; molecules move faster.",
-      "Decreases; molecules collide less frequently with walls.",
-      "Stays the same; kinetic energy is constant.",
-      "Increases; more frequent collisions.",
-    ],
-    correctAnswer: 1,
-    explanation:
-      "Boyle's Law: As volume increases, the frequency of collisions with the walls decreases, leading to lower pressure.",
-  },
-  {
-    id: 7,
-    paper: "June 2023",
-    topic: "Fluids",
-    type: "fluids",
-    question:
-      "Oil flows steadily through a pipe (laminar flow). Which describes the velocity across the pipe?",
-    options: [
-      "Velocity is highest at the walls.",
-      "Velocity is uniform across the pipe.",
-      "Velocity is highest in the center and zero at the walls.",
-      "Velocity fluctuates randomly.",
-    ],
-    correctAnswer: 2,
-    explanation:
-      "In laminar flow, friction at the walls creates a velocity gradient where the speed is zero at the boundary and maximum at the center.",
-  },
-  {
-    id: 8,
-    paper: "January 2025 (Model)",
-    topic: "Materials",
-    type: "materials",
-    question:
-      "What does the gradient of the initial straight-line portion of a stress-strain graph represent?",
-    options: [
-      "Yield point",
-      "Tensile strength",
-      "Plastic deformation",
-      "Young's modulus",
-    ],
-    correctAnswer: 3,
-    explanation:
-      "The gradient of the elastic region is Stress/Strain, which is the definition of Young's Modulus (E).",
-  },
-  {
-    id: 9,
-    paper: "January 2025 (Model)",
-    topic: "Materials",
-    type: "materials",
-    question:
-      "Which material exhibits 'hysteresis' during loading and unloading on a stress-strain graph?",
-    options: ["Polythene", "Copper wire", "Steel wire", "Glass"],
-    correctAnswer: 0,
-    explanation:
-      "Polymers like polythene exhibit hysteresis, where energy is dissipated as heat during a deformation cycle.",
-  },
-  {
-    id: 10,
-    paper: "January 2025 (Model)",
-    topic: "Thermal Physics",
-    type: "thermal",
-    question: "Why can a heat engine's efficiency never reach 100%?",
-    options: [
-      "Friction creates extra energy.",
-      "The specific heat capacity is too high.",
-      "Energy must always be expelled to a cold reservoir.",
-      "Energy is destroyed during work.",
-    ],
-    correctAnswer: 2,
-    explanation:
-      "The Second Law of Thermodynamics requires a temperature difference; some heat must be rejected to the sink.",
-  },
-  {
-    id: 11,
-    paper: "Past Paper Mix",
-    topic: "Thermal Physics",
-    type: "thermal",
-    question:
-      "A 2.0 kg copper block needs 7700 J to raise temp by 10 °C. What is the specific heat capacity?",
-    options: ["385 J/kg°C", "770 J/kg°C", "3850 J/kg°C", "15400 J/kg°C"],
-    correctAnswer: 0,
-    explanation: "c = Q / (mΔT) = 7700 / (2.0 * 10) = 385 J/kg°C.",
-  },
-  {
-    id: 12,
-    paper: "Past Paper Mix",
-    topic: "Fluids",
-    type: "fluids",
-    question:
-      "How does the dynamic viscosity of a liquid change as temperature increases?",
-    options: [
-      "It increases.",
-      "It decreases.",
-      "It remains constant.",
-      "It drops to zero.",
-    ],
-    correctAnswer: 1,
-    explanation:
-      "Increased kinetic energy allows molecules to overcome cohesive forces, reducing internal friction (viscosity).",
-  },
-  {
-    id: 13,
-    paper: "Past Paper Mix",
-    topic: "Materials",
-    type: "materials",
-    question: "A 2.0 m wire extends by 4.0 mm under force. What is the strain?",
-    options: ["0.002", "0.008", "2.0", "8.0"],
-    correctAnswer: 0,
-    explanation: "Strain = extension / length = 0.004m / 2.0m = 0.002.",
-  },
-  {
-    id: 14,
-    paper: "Past Paper Mix",
-    topic: "Fluids",
-    type: "fluids",
-    question: "According to Archimedes' principle, upthrust is equal to...",
-    options: [
-      "Object volume.",
-      "Object mass.",
-      "Weight of fluid displaced.",
-      "Fluid density.",
-    ],
-    correctAnswer: 2,
-    explanation:
-      "Upthrust equals the weight of the fluid displaced by the submerged part of the object.",
-  },
-  {
-    id: 15,
-    paper: "Past Paper Mix",
-    topic: "Thermal Physics",
-    type: "thermal",
-    question:
-      "What is an advantage of a thermocouple over a liquid-in-glass thermometer?",
-    options: [
-      "It is fragile.",
-      "Slow response.",
-      "Measures rapidly changing temperatures.",
-      "No calibration needed.",
-    ],
-    correctAnswer: 2,
-    explanation:
-      "Small thermal mass allows thermocouples to track rapid changes and reach thermal equilibrium quickly.",
-  },
-];
-
-const topicMeta = {
-  all: {
-    label: "All topics",
-    type: "all",
-    description:
-      "Mixed-paper revision session across fluids, thermal physics, and materials.",
-  },
-  fluids: {
-    label: "Fluids",
-    type: "fluids",
-    description: "Pressure, viscosity, upthrust, Bernoulli, and laminar flow.",
-  },
-  thermal: {
-    label: "Thermal Physics",
-    type: "thermal",
-    description:
-      "Entropy, latent heat, heat engines, Boyle’s law, and temperature measurements.",
-  },
-  materials: {
-    label: "Materials",
-    type: "materials",
-    description:
-      "Stress-strain behaviour, modulus, hysteresis, and strain calculations.",
-  },
-};
-
-function TopicIcon({ type }) {
-  switch (type) {
-    case "fluids":
-      return <Droplets size={18} />;
-    case "thermal":
-      return <Thermometer size={18} />;
-    case "materials":
-      return <Activity size={18} />;
+function getModeItems(mode) {
+  switch (mode) {
+    case "official":
+      return questionBank.filter(
+        (item) => item.sourceType === "official-reference",
+      );
+    case "pdf":
+      return questionBank.filter((item) => Boolean(item.publicPaperUrl));
+    case "timed":
+      return questionBank.filter(
+        (item) => item.sourceType === "selfcheck-only",
+      );
+    case "model":
+      return questionBank.filter((item) => item.sourceType === "model");
     default:
-      return <BookOpen size={18} />;
+      return [];
   }
 }
 
-export default function App() {
-  const [selectedTopic, setSelectedTopic] = useState("all");
-  const [started, setStarted] = useState(false);
-  const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState(null);
-  const [isAnswered, setIsAnswered] = useState(false);
-  const [score, setScore] = useState(0);
-  const [finished, setFinished] = useState(false);
+function getScoreSummary(items, responses) {
+  const scoreable = items.filter((item) => item.type !== "selfcheck");
+  const correct = scoreable.filter(
+    (item) => responses[item.id]?.result?.isCorrect === true,
+  ).length;
+  const attempted = scoreable.filter(
+    (item) => typeof responses[item.id]?.result?.isCorrect === "boolean",
+  ).length;
 
-  const questionSet = useMemo(() => {
-    if (selectedTopic === "all") {
-      return examData;
-    }
+  return {
+    total: scoreable.length,
+    correct,
+    attempted,
+  };
+}
 
-    return examData.filter((question) => question.type === selectedTopic);
-  }, [selectedTopic]);
+function getTypeHint(item) {
+  switch (item.type) {
+    case "mcq":
+      return "Choose the option letter shown in the paper.";
+    case "short":
+      return "Type the short answer exactly as expected.";
+    case "numeric":
+      return "Enter a number. Scientific notation is accepted.";
+    case "keywords":
+      return "Write the key scientific ideas. Matching is based on required points.";
+    case "selfcheck":
+      return "Use the notes box for your own self-check. This mode does not auto-mark.";
+    default:
+      return "";
+  }
+}
 
-  const papers = useMemo(
-    () => [...new Set(questionSet.map((question) => question.paper))],
-    [questionSet],
+function App() {
+  const [mode, setMode] = useState("official");
+  const [selectedTopic, setSelectedTopic] = useState(allTopicsLabel);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [responses, setResponses] = useState({});
+
+  const modeItems = useMemo(() => getModeItems(mode), [mode]);
+  const topics = useMemo(
+    () => [allTopicsLabel, ...new Set(modeItems.map((item) => item.topic))],
+    [modeItems],
   );
+  const activeTopic = topics.includes(selectedTopic)
+    ? selectedTopic
+    : allTopicsLabel;
+  const visibleItems = useMemo(() => {
+    if (activeTopic === allTopicsLabel) {
+      return modeItems;
+    }
 
-  const accuracy =
-    questionSet.length === 0
-      ? 0
-      : Math.round((score / questionSet.length) * 100);
-  const answeredCount = finished
-    ? questionSet.length
-    : index + (isAnswered ? 1 : 0);
-  const progress =
-    questionSet.length === 0 ? 0 : (answeredCount / questionSet.length) * 100;
-  const current = questionSet[index];
-  const currentTopic = topicMeta[selectedTopic];
+    return modeItems.filter((item) => item.topic === activeTopic);
+  }, [activeTopic, modeItems]);
+  const scoreSummary = useMemo(
+    () => getScoreSummary(visibleItems, responses),
+    [responses, visibleItems],
+  );
+  const currentItem = visibleItems[currentIndex] ?? null;
+  const currentResponse = currentItem
+    ? (responses[currentItem.id] ?? { input: "", notes: "", result: null })
+    : { input: "", notes: "", result: null };
 
-  const resetSession = (nextTopic = selectedTopic) => {
-    setSelectedTopic(nextTopic);
-    setStarted(false);
-    setIndex(0);
-    setSelected(null);
-    setIsAnswered(false);
-    setScore(0);
-    setFinished(false);
+  const selectMode = (nextMode) => {
+    setMode(nextMode);
+    setSelectedTopic(allTopicsLabel);
+    setCurrentIndex(0);
   };
 
-  const startSession = () => {
-    setStarted(true);
-    setIndex(0);
-    setSelected(null);
-    setIsAnswered(false);
-    setScore(0);
-    setFinished(false);
+  const selectTopic = (topic) => {
+    setSelectedTopic(topic);
+    setCurrentIndex(0);
   };
 
-  const handleTopicChange = (topic) => {
-    resetSession(topic);
+  const patchResponse = (id, patch) => {
+    setResponses((previous) => ({
+      ...previous,
+      [id]: {
+        ...(previous[id] ?? {}),
+        ...patch,
+      },
+    }));
   };
 
-  const handleChoice = (choiceIndex) => {
-    if (isAnswered || !current) {
+  const updateAnswer = (value) => {
+    if (!currentItem) {
       return;
     }
 
-    setSelected(choiceIndex);
-    setIsAnswered(true);
-
-    if (choiceIndex === current.correctAnswer) {
-      setScore((previousScore) => previousScore + 1);
-    }
+    patchResponse(currentItem.id, { input: value });
   };
 
-  const handleNext = () => {
-    if (index + 1 < questionSet.length) {
-      setIndex((previousIndex) => previousIndex + 1);
-      setSelected(null);
-      setIsAnswered(false);
+  const checkAnswer = (overrideValue) => {
+    if (!currentItem || currentItem.type === "selfcheck") {
       return;
     }
 
-    setFinished(true);
+    const input = overrideValue ?? currentResponse.input ?? "";
+    const result = gradeResponse(currentItem, input);
+    patchResponse(currentItem.id, { input, result });
   };
 
-  const getOptionState = (optionIndex) => {
-    if (!isAnswered) {
-      return "idle";
+  const handleOptionPick = (option) => {
+    if (!currentItem) {
+      return;
     }
 
-    if (optionIndex === current.correctAnswer) {
-      return "correct";
-    }
-
-    if (optionIndex === selected) {
-      return "wrong";
-    }
-
-    return "muted";
+    updateAnswer(option);
+    checkAnswer(option);
   };
+
+  const clearCurrent = () => {
+    if (!currentItem) {
+      return;
+    }
+
+    patchResponse(currentItem.id, { input: "", notes: "", result: null });
+  };
+
+  const sourceMeta = currentItem
+    ? sourceTypeMeta[currentItem.sourceType]
+    : null;
+  const typeHint = currentItem ? getTypeHint(currentItem) : "";
 
   return (
-    <div className="page-shell">
-      <div className="page-aura page-aura-left" />
-      <div className="page-aura page-aura-right" />
-
-      <div className="page-content">
-        <header className="hero panel">
-          <div>
-            <p className="eyebrow">BTEC Unit 5 Physics</p>
-            <h1>Exam practice turned into a real revision website.</h1>
-            <p className="hero-copy">
-              This site uses the full question bank from your source file and
-              packages it as a focused study tool for GitHub Pages.
-            </p>
-          </div>
-
-          <div className="hero-stats">
-            <div>
-              <span>Questions</span>
-              <strong>{examData.length}</strong>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <header className="overflow-hidden rounded-[2rem] border border-sky-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.22),_transparent_30%),linear-gradient(135deg,_rgba(15,23,42,0.96),_rgba(12,74,110,0.92),_rgba(8,47,73,0.96))] p-6 shadow-2xl shadow-sky-950/20 sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-sky-200">
+                BTEC Unit 5 Physics Trainer
+              </p>
+              <h1 className="mt-3 max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl">
+                Official paper references, verified answers, and legal summaries
+                only.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base text-slate-200 sm:text-lg">
+                The trainer now separates official references, PDF-supported
+                study, timed self-check papers, and clearly labelled model
+                revision.
+              </p>
             </div>
-            <div>
-              <span>Papers</span>
-              <strong>
-                {new Set(examData.map((question) => question.paper)).size}
-              </strong>
-            </div>
-            <div>
-              <span>Topics</span>
-              <strong>3</strong>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.25em] text-sky-100/70">
+                  Official refs
+                </p>
+                <p className="mt-2 text-2xl font-bold text-white">
+                  {
+                    questionBank.filter(
+                      (item) => item.sourceType === "official-reference",
+                    ).length
+                  }
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.25em] text-sky-100/70">
+                  PDF links
+                </p>
+                <p className="mt-2 text-2xl font-bold text-white">
+                  {questionBank.filter((item) => item.publicPaperUrl).length}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.25em] text-sky-100/70">
+                  Timed only
+                </p>
+                <p className="mt-2 text-2xl font-bold text-white">
+                  {
+                    questionBank.filter(
+                      (item) => item.sourceType === "selfcheck-only",
+                    ).length
+                  }
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.25em] text-sky-100/70">
+                  Model items
+                </p>
+                <p className="mt-2 text-2xl font-bold text-white">
+                  {
+                    questionBank.filter((item) => item.sourceType === "model")
+                      .length
+                  }
+                </p>
+              </div>
             </div>
           </div>
         </header>
 
-        <section className="dashboard-grid">
-          <aside className="panel side-panel">
-            <div className="panel-heading">
-              <h2>Study mode</h2>
-              <p>Pick a focused topic or revise the full mixed paper set.</p>
-            </div>
+        <div className="rounded-2xl border border-amber-400/25 bg-amber-300/10 px-4 py-3 text-sm text-amber-50 shadow-lg shadow-amber-950/10">
+          <span className="font-semibold">★ Notice:</span> This app uses
+          official paper references and verified answers where available. Full
+          Pearson question text is not copied.
+        </div>
 
-            <div className="topic-list">
-              {Object.entries(topicMeta).map(([key, value]) => {
-                const count =
-                  key === "all"
-                    ? examData.length
-                    : examData.filter((question) => question.type === key)
-                        .length;
+        <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+          <aside className="space-y-6">
+            <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/20 backdrop-blur">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-white">App modes</h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Switch between official references, linked PDF study, timed
+                    paper practice, and model revision.
+                  </p>
+                </div>
+                <span className="rounded-full border border-sky-400/30 bg-sky-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-sky-200">
+                  ▣ Modes
+                </span>
+              </div>
 
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`topic-button ${selectedTopic === key ? "topic-button-active" : ""}`}
-                    onClick={() => handleTopicChange(key)}
+              <div className="mt-5 grid gap-3">
+                {Object.entries(modeMeta).map(([key, value]) => {
+                  const active = key === mode;
+
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => selectMode(key)}
+                      className={`rounded-2xl border px-4 py-3 text-left transition ${
+                        active
+                          ? "border-sky-400/60 bg-sky-400/15 text-white"
+                          : "border-slate-800 bg-slate-950/70 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-semibold">{value.label}</span>
+                        <span className="text-sm text-slate-400">
+                          {value.icon}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-slate-400">
+                        {value.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/20 backdrop-blur">
+              <h2 className="text-lg font-bold text-white">Topic filter</h2>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {topics.map((topic) => {
+                  const active = topic === activeTopic;
+
+                  return (
+                    <button
+                      key={topic}
+                      type="button"
+                      onClick={() => selectTopic(topic)}
+                      className={`rounded-full border px-3 py-2 text-sm transition ${
+                        active
+                          ? "border-cyan-300/60 bg-cyan-300/15 text-cyan-100"
+                          : "border-slate-700 bg-slate-950/70 text-slate-300 hover:border-slate-600"
+                      }`}
+                    >
+                      {topic}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/20 backdrop-blur">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold text-white">
+                    Official paper library
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Public study links used by this trainer. Open papers and
+                    schemes directly from here.
+                  </p>
+                </div>
+                <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-emerald-200">
+                  ★ Library
+                </span>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {paperLibrary.map((entry) => (
+                  <article
+                    key={entry.id}
+                    className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4"
                   >
-                    <span className="topic-button-label">
-                      <TopicIcon type={value.type} />
-                      {value.label}
-                    </span>
-                    <span className="topic-count">{count}</span>
-                  </button>
-                );
-              })}
-            </div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+                          {entry.tag}
+                        </p>
+                        <h3 className="mt-2 text-base font-semibold text-white">
+                          {entry.title}
+                        </h3>
+                      </div>
+                      <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-300">
+                        {entry.badge}
+                      </span>
+                    </div>
 
-            <div className="topic-card">
-              <div className="topic-card-header">
-                <TopicIcon type={currentTopic.type} />
-                <h3>{currentTopic.label}</h3>
-              </div>
-              <p>{currentTopic.description}</p>
-            </div>
+                    <p className="mt-3 text-sm text-slate-400">
+                      {entry.description}
+                    </p>
 
-            <dl className="session-facts">
-              <div>
-                <dt>Questions in session</dt>
-                <dd>{questionSet.length}</dd>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {entry.paperUrl && (
+                        <a
+                          href={entry.paperUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-full border border-sky-400/40 bg-sky-400/10 px-3 py-2 text-sm font-semibold text-sky-100 transition hover:border-sky-300 hover:bg-sky-400/15"
+                        >
+                          ▣ Open paper
+                        </a>
+                      )}
+                      {entry.markSchemeUrl && (
+                        <a
+                          href={entry.markSchemeUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-400/15"
+                        >
+                          ✓ Open mark scheme
+                        </a>
+                      )}
+                    </div>
+                  </article>
+                ))}
               </div>
-              <div>
-                <dt>Papers included</dt>
-                <dd>{papers.length}</dd>
-              </div>
-              <div>
-                <dt>Current score</dt>
-                <dd>{score}</dd>
-              </div>
-            </dl>
-
-            <div className="panel-actions">
-              <button
-                type="button"
-                className="primary-button"
-                onClick={startSession}
-              >
-                {started ? "Restart this session" : "Start revision"}
-                <ArrowRight size={18} />
-              </button>
-
-              {(started || finished) && (
-                <button
-                  type="button"
-                  className="ghost-button"
-                  onClick={() => resetSession()}
-                >
-                  <RotateCcw size={18} />
-                  Reset
-                </button>
-              )}
-            </div>
+            </section>
           </aside>
 
-          <main className="panel question-panel">
-            <div className="question-topbar">
-              <div>
-                <p className="eyebrow">31627H/1P Exam Prep</p>
-                <h2>
-                  {started && !finished
-                    ? `Question ${index + 1} of ${questionSet.length}`
-                    : finished
-                      ? "Session summary"
-                      : "Ready to begin"}
-                </h2>
-              </div>
-
-              <div className="score-chip">
-                <Trophy size={18} />
-                <span>{score} marks</span>
-              </div>
-            </div>
-
-            <div className="progress-track" aria-hidden="true">
-              <div className="progress-bar" style={{ width: `${progress}%` }} />
-            </div>
-
-            {!started && (
-              <div className="empty-state">
-                <BookOpen size={30} />
-                <h3>Launch a timed-feel practice round</h3>
-                <p>
-                  You can switch topics at any point. Starting a new topic
-                  automatically resets the score so each revision run stays
-                  clean.
-                </p>
-              </div>
-            )}
-
-            {started && finished && (
-              <div className="results-card">
-                <div className="results-icon">
-                  <CheckCircle2 size={34} />
+          <main className="space-y-6">
+            <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/20 backdrop-blur">
+              <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-200">
+                    {modeMeta[mode].label}
+                  </p>
+                  <h2 className="mt-3 text-3xl font-black tracking-tight text-white">
+                    {modeMeta[mode].headline}
+                  </h2>
+                  <p className="mt-3 text-base text-slate-300">
+                    {modeMeta[mode].description}
+                  </p>
                 </div>
 
-                <h3>Practice complete</h3>
-                <p className="results-copy">
-                  You answered {score} out of {questionSet.length} correctly in
-                  the {currentTopic.label.toLowerCase()} set.
-                </p>
-
-                <div className="results-grid">
-                  <article>
-                    <span>Accuracy</span>
-                    <strong>{accuracy}%</strong>
-                  </article>
-                  <article>
-                    <span>Questions done</span>
-                    <strong>{questionSet.length}</strong>
-                  </article>
-                  <article>
-                    <span>Papers covered</span>
-                    <strong>{papers.length}</strong>
-                  </article>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+                      Items
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-white">
+                      {visibleItems.length}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+                      Attempted
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-white">
+                      {scoreSummary.attempted}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+                      Correct
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-white">
+                      {scoreSummary.correct}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+                      Active topic
+                    </p>
+                    <p className="mt-2 text-lg font-bold text-white">
+                      {activeTopic}
+                    </p>
+                  </div>
                 </div>
-
-                <button
-                  type="button"
-                  className="primary-button"
-                  onClick={startSession}
-                >
-                  <RotateCcw size={18} />
-                  Try again
-                </button>
               </div>
-            )}
 
-            {started && !finished && current && (
-              <div className="question-card">
-                <div className="question-meta">
-                  <span className="question-tag question-tag-topic">
-                    <TopicIcon type={current.type} />
-                    {current.topic}
-                  </span>
-                  <span className="question-tag question-tag-paper">
-                    {current.paper}
-                  </span>
+              {mode === "pdf" && (
+                <div className="mt-5 rounded-2xl border border-cyan-300/30 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-50">
+                  <span className="font-semibold">▣ PDF Study Mode:</span> Open
+                  the paper and answer the referenced question.
                 </div>
+              )}
+            </section>
 
-                <h3 className="question-title">{current.question}</h3>
-
-                <div className="answers-grid">
-                  {current.options.map((option, optionIndex) => {
-                    const optionState = getOptionState(optionIndex);
+            {visibleItems.length > 0 && (
+              <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/80 p-4 shadow-xl shadow-slate-950/20 backdrop-blur sm:p-5">
+                <div className="flex flex-wrap gap-2">
+                  {visibleItems.map((item, index) => {
+                    const active = currentItem?.id === item.id;
+                    const result = responses[item.id]?.result;
+                    const statusText =
+                      result?.isCorrect === true
+                        ? "✓"
+                        : result?.isCorrect === false
+                          ? "×"
+                          : "▣";
 
                     return (
                       <button
-                        key={option}
+                        key={item.id}
                         type="button"
-                        disabled={isAnswered}
-                        onClick={() => handleChoice(optionIndex)}
-                        className={`answer-button answer-button-${optionState}`}
+                        onClick={() => setCurrentIndex(index)}
+                        className={`rounded-full border px-3 py-2 text-sm transition ${
+                          active
+                            ? "border-sky-400/60 bg-sky-400/15 text-white"
+                            : "border-slate-700 bg-slate-950/70 text-slate-300 hover:border-slate-600"
+                        }`}
                       >
-                        <span>{option}</span>
-                        {optionState === "correct" && (
-                          <CheckCircle2 size={18} />
-                        )}
-                        {optionState === "wrong" && <XCircle size={18} />}
+                        {statusText} {item.paper} {item.questionRef}
                       </button>
                     );
                   })}
                 </div>
+              </section>
+            )}
 
-                {isAnswered && (
-                  <div className="feedback-card">
-                    <p>
-                      <strong>Explanation:</strong> {current.explanation}
-                    </p>
+            {!currentItem ? (
+              <section className="rounded-[1.75rem] border border-dashed border-slate-700 bg-slate-900/70 p-8 text-center text-slate-300 shadow-xl shadow-slate-950/20">
+                <p className="text-lg font-semibold text-white">
+                  No items match this mode and topic filter.
+                </p>
+                <p className="mt-2 text-sm text-slate-400">
+                  Change the topic filter or switch to another mode.
+                </p>
+              </section>
+            ) : (
+              <section className="rounded-[2rem] border border-slate-800 bg-[linear-gradient(180deg,_rgba(15,23,42,0.94),_rgba(15,23,42,0.84))] p-5 shadow-2xl shadow-slate-950/30 sm:p-6">
+                <div className="flex flex-col gap-4 border-b border-slate-800 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+                      <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-slate-200">
+                        {currentItem.paper}
+                      </span>
+                      <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-slate-200">
+                        {currentItem.paperCode}
+                      </span>
+                      <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-slate-200">
+                        {currentItem.questionRef}
+                      </span>
+                      <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-slate-200">
+                        {currentItem.topic}
+                      </span>
+                      <span
+                        className={`rounded-full border px-3 py-1 ${sourceMeta.badgeClass}`}
+                      >
+                        {sourceMeta.icon} {sourceMeta.label}
+                      </span>
+                    </div>
+                    <h3 className="mt-4 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                      {currentItem.prompt}
+                    </h3>
+                    <p className="mt-3 text-sm text-slate-400">{typeHint}</p>
+                  </div>
 
+                  <div className="flex flex-wrap gap-2 sm:max-w-xs sm:justify-end">
+                    {currentItem.publicPaperUrl && (
+                      <a
+                        href={currentItem.publicPaperUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full border border-sky-400/40 bg-sky-400/10 px-3 py-2 text-sm font-semibold text-sky-100 transition hover:border-sky-300 hover:bg-sky-400/15"
+                      >
+                        ▣ Open paper
+                      </a>
+                    )}
+                    {currentItem.officialMarkSchemeUrl && (
+                      <a
+                        href={currentItem.officialMarkSchemeUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-400/15"
+                      >
+                        ✓ Open mark scheme
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-5">
+                  {currentItem.type === "mcq" && (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {currentItem.options?.map((option) => {
+                        const selected = currentResponse.input === option;
+                        const result = currentResponse.result;
+                        const isCorrect =
+                          Boolean(result) &&
+                          option.toUpperCase() === currentItem.correctAnswer;
+                        const isWrong =
+                          Boolean(result) &&
+                          selected &&
+                          option.toUpperCase() !== currentItem.correctAnswer;
+
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => handleOptionPick(option)}
+                            className={`rounded-2xl border px-4 py-4 text-left text-base font-semibold transition ${
+                              isCorrect
+                                ? "border-emerald-400/50 bg-emerald-400/10 text-emerald-100"
+                                : isWrong
+                                  ? "border-rose-400/50 bg-rose-400/10 text-rose-100"
+                                  : selected
+                                    ? "border-sky-400/50 bg-sky-400/10 text-white"
+                                    : "border-slate-700 bg-slate-950/70 text-slate-200 hover:border-slate-500"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <span>Option {option}</span>
+                              <span className="text-lg">
+                                {isCorrect ? "✓" : isWrong ? "×" : "▣"}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {currentItem.type === "short" && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">
+                        Answer
+                      </label>
+                      <input
+                        value={currentResponse.input ?? ""}
+                        onChange={(event) => updateAnswer(event.target.value)}
+                        placeholder="Type your short answer"
+                        className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-sky-400/50"
+                      />
+                    </div>
+                  )}
+
+                  {currentItem.type === "numeric" && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">
+                        Numerical answer
+                      </label>
+                      <div className="flex flex-col gap-3 sm:flex-row">
+                        <input
+                          value={currentResponse.input ?? ""}
+                          onChange={(event) => updateAnswer(event.target.value)}
+                          placeholder="Example: 0.885 or 8.85e-1"
+                          className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-sky-400/50"
+                        />
+                        {currentItem.unit && (
+                          <div className="rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm font-semibold text-slate-300">
+                            Unit: {currentItem.unit}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {currentItem.type === "keywords" && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">
+                        Key ideas answer
+                      </label>
+                      <textarea
+                        value={currentResponse.input ?? ""}
+                        onChange={(event) => updateAnswer(event.target.value)}
+                        rows={6}
+                        placeholder="Write the scientific ideas you would include."
+                        className="w-full rounded-3xl border border-slate-700 bg-slate-950/70 px-4 py-4 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-sky-400/50"
+                      />
+                    </div>
+                  )}
+
+                  {currentItem.type === "selfcheck" && (
+                    <div className="space-y-3 rounded-3xl border border-amber-400/25 bg-amber-300/10 p-4">
+                      <p className="text-sm text-amber-50">
+                        <span className="font-semibold">
+                          ★ Timed/self-check only:
+                        </span>{" "}
+                        Use this space to record what you got right, what you
+                        missed, and what to review.
+                      </p>
+                      <textarea
+                        value={currentResponse.notes ?? ""}
+                        onChange={(event) =>
+                          patchResponse(currentItem.id, {
+                            notes: event.target.value,
+                          })
+                        }
+                        rows={8}
+                        placeholder="Add your timed-paper notes here."
+                        className="w-full rounded-3xl border border-amber-400/20 bg-slate-950/60 px-4 py-4 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-amber-300/50"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-3">
+                    {currentItem.type !== "mcq" &&
+                      currentItem.type !== "selfcheck" && (
+                        <button
+                          type="button"
+                          onClick={() => checkAnswer()}
+                          className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-400/15"
+                        >
+                          ✓ Check answer
+                        </button>
+                      )}
                     <button
                       type="button"
-                      className="primary-button"
-                      onClick={handleNext}
+                      onClick={clearCurrent}
+                      className="rounded-full border border-slate-700 bg-slate-950/70 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-900"
                     >
-                      {index + 1 === questionSet.length
-                        ? "Finish session"
-                        : "Next question"}
-                      <ArrowRight size={18} />
+                      ↺ Clear current response
                     </button>
                   </div>
-                )}
-              </div>
+
+                  {currentResponse.result &&
+                    currentItem.type !== "selfcheck" && (
+                      <div
+                        className={`rounded-3xl border p-5 ${
+                          currentResponse.result.isCorrect === true
+                            ? "border-emerald-400/30 bg-emerald-400/10"
+                            : currentResponse.result.status === "partial"
+                              ? "border-amber-400/30 bg-amber-300/10"
+                              : "border-rose-400/30 bg-rose-400/10"
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-100">
+                            {currentResponse.result.isCorrect === true
+                              ? "✓ Correct"
+                              : currentResponse.result.status === "partial"
+                                ? "▣ Partial"
+                                : "× Not yet correct"}
+                          </span>
+                          {currentResponse.result.matchedCount > 0 && (
+                            <span className="text-sm text-slate-200">
+                              Matched ideas:{" "}
+                              {currentResponse.result.matchedCount}
+                              {currentResponse.result.requiredCount
+                                ? ` / ${currentResponse.result.requiredCount}`
+                                : ""}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-4 text-base leading-7 text-slate-100">
+                          {currentItem.correction}
+                        </p>
+
+                        {currentItem.learn && (
+                          <p className="mt-3 text-sm text-slate-200">
+                            <span className="font-semibold">Learn:</span>{" "}
+                            {currentItem.learn}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                </div>
+
+                <div className="mt-6 flex flex-col gap-3 border-t border-slate-800 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-slate-400">
+                    Item {visibleItems.length === 0 ? 0 : currentIndex + 1} of{" "}
+                    {visibleItems.length}
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      disabled={currentIndex === 0}
+                      onClick={() =>
+                        setCurrentIndex((index) => Math.max(index - 1, 0))
+                      }
+                      className="rounded-full border border-slate-700 bg-slate-950/70 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      ← Previous
+                    </button>
+                    <button
+                      type="button"
+                      disabled={currentIndex >= visibleItems.length - 1}
+                      onClick={() =>
+                        setCurrentIndex((index) =>
+                          Math.min(index + 1, visibleItems.length - 1),
+                        )
+                      }
+                      className="rounded-full border border-slate-700 bg-slate-950/70 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              </section>
             )}
           </main>
-        </section>
+        </div>
       </div>
     </div>
   );
 }
+
+export default App;
